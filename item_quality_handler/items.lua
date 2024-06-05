@@ -1,0 +1,29 @@
+Good_items_base{
+	'minecraft:raw_iron_block',
+	'minecraft:raw_gold_block',
+	'minecraft:diamond',
+	'minecraft:emerald',
+	'minecraft:ancient_debris',
+	'minecraft:beacon',
+	'minecraft:netherite',
+	'minecraft:iron_block',
+	'minecraft:gold_block',
+	'minecraft:emerald_block',
+	'minecraft:lapis_block',
+	'minecraft:diamond_block',
+	'minecraft:netherite_block',
+}
+Average_items_base{
+	'minecraft:raw_iron',
+	'minecraft:raw_gold',
+	'minecraft:coal',
+	'minecraft:coal_block',
+	'minecraft:lapis',
+	'minecraft:redstone',
+	'minecraft:obsidian',
+	'minecraft:raw_zinc',
+	'minecraft:raw_copper'
+}
+Bad_items_base{
+	
+}
