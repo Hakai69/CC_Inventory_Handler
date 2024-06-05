@@ -54,28 +54,26 @@ function inventory.register_slot(slot)
     inventory.insert_new_item(slot, item_data)
 end
 
----Initialize inventory with all the information
-for i=1, inventory.num_slots do
-    inventory.register_slot(i)
-end
-
 ---Gets the item's name from a certain slot.
 ---@param slot integer
----@return string
+---@return string?
 function inventory.get_item_name(slot)
-    return inventory.slots[slot].name
+    local instance = inventory.slots[slot]
+    return instance and instance.name or nil
 end
 
 ---Sets a slot to a certain amount of items.
 ---@param slot integer
 ---@param amount integer
 function inventory.set_slot_to(slot, amount)
-    amount = math.min(amount, inventory.slots[slot].max_count)
+    local instance = inventory.slots[slot]
+
+    amount = math.min(amount, instance.max_count)
     amount = math.max(amount, 0)
 
     if amount == 0 then
+        inventory.lookup[instance.name][slot] = nil
         inventory.slots[slot] = nil
-        inventory.lookup[inventory.get_item_name(slot)][slot] = nil
     else
         inventory.slots[slot].count = amount
     end
@@ -120,11 +118,13 @@ function inventory.transferTo(slot)
         local origin_count = inventory.slots[inventory.selected_slot].count
         local target_max_count = inventory.slots[slot].max_count
         local target_count = inventory.slots[slot].count
+
         inventory.add_to_slot(inventory.selected_slot, target_count - target_max_count)
         inventory.add_to_slot(slot, origin_count)
+
     else --If the slot is empty just transfer everything
-        inventory.set_slot_to(inventory.selected_slot, 0)
         inventory.insert_new_item(slot, inventory.slots[inventory.selected_slot])
+        inventory.set_slot_to(inventory.selected_slot, 0)
     end
 
     return bool, str
@@ -138,7 +138,7 @@ end
 ---@return string? reason The reason why it wasn't successful
 function inventory.drop_function(func, count)
     local bool, str = func(count)
-    if bool ~= true then
+    if not bool then
         return bool, str
     end
 
@@ -176,18 +176,23 @@ end
 ---@return integer | false
 function inventory.find_empty_slot()
     local slot = 1
-    while inventory.slot[slot] and slot < inventory.num_slots do --Slot 16 is intentionally not included
+    while inventory.slot[slot] and slot < inventory.num_slots do
         slot = slot + 1
     end
-    return slot < 16 and slot or false
+    return slot < 16 and slot or false -- Slot 16 not included for managing items
 end
 
 ---Fills vacant entries of an item with the items at the selected spot
 ---@param vacated_slot integer Slot being vacated
 ---@return boolean
 function inventory.fill_vacant_slots(vacated_slot)
-    local original_slot = inventory.getSelectedSlot()
+    if not inventory.slots[vacated_slot] then
+        return true
+    end
+
+    local original_slot = inventory.selected_slot
     inventory.select(vacated_slot)
+
     local vacated_item_name = inventory.slots[vacated_slot].name
     local remaining_items = inventory.slots[vacated_slot].count
 
@@ -200,6 +205,7 @@ function inventory.fill_vacant_slots(vacated_slot)
             vacating_slot, vacating_instance = next(inventory.lookup[vacated_item_name], vacating_slot)
         end
     end
+
     inventory.select(original_slot)
     return remaining_items <= 0
 end
@@ -234,7 +240,7 @@ function inventory.vacate_slot(slot)
     -- Protocol 2: Find empty slot
     local empty_slot = inventory.find_empty_slot()
     if empty_slot then
-        local original_slot = inventory.getSelectedSlot()
+        local original_slot = inventory.selected_slot
         inventory.select(slot)
         inventory.transferTo(empty_slot)
         inventory.select(original_slot)
@@ -247,7 +253,7 @@ function inventory.vacate_slot(slot)
     end
 
     ---Protocol 4: Drop item
-    local original_slot = inventory.getSelectedSlot()
+    local original_slot = inventory.selected_slot
     inventory.select(slot)
     inventory.drop()
     inventory.select(original_slot)
@@ -268,6 +274,7 @@ function inventory.dig_function(func, toolSide)
         return bool, str
     end
 
+    inventory.register_slot(16)
     inventory.vacate_slot(16)
     return bool, str
 end
@@ -277,7 +284,7 @@ end
 ---@return boolean
 ---@return string?
 function inventory.dig(toolSide)
-    return inventory.drop_function(turtle.dig, toolSide)
+    return inventory.dig_function(turtle.dig, toolSide)
 end
 
 ---Equivalent to turtle.dropUp(count), but also handling it.
@@ -285,7 +292,7 @@ end
 ---@return boolean
 ---@return string?
 function inventory.digUp(toolSide)
-    return inventory.drop_function(turtle.digUp, toolSide)
+    return inventory.dig_function(turtle.digUp, toolSide)
 end
 
 ---Equivalent to turtle.dropDown(count), but also handling it.
@@ -293,7 +300,7 @@ end
 ---@return boolean
 ---@return string?
 function inventory.digDown(toolSide)
-    return inventory.drop_function(turtle.digDown, toolSide)
+    return inventory.dig_function(turtle.digDown, toolSide)
 end
 
 
@@ -314,6 +321,12 @@ function inventory.check_for_all(item_name)
         table.insert(locations, slot)
     end
     return locations
+end
+
+
+---Initialize inventory with all the information
+for i=1, inventory.num_slots do
+    inventory.register_slot(i)
 end
 
 return inventory
