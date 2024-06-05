@@ -45,6 +45,9 @@ end
 ---@param slot integer
 function inventory.register_slot(slot)
     local item_data = turtle.getItemDetail(slot)
+    if not item_data then
+        return
+    end
     local space = turtle.getItemSpace(slot)
     item_data.max_count = item_data.count + space
 
