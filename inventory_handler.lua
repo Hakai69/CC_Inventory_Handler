@@ -154,21 +154,21 @@ end
 ---@params count? integer
 ---@return boolean|string|nil
 function inventory.drop(count)
-    return inventory.drop_function(count, turtle.drop)
+    return inventory.drop_function(turtle.drop, count)
 end
 
 ---Equivalent to turtle.dropUp(count), but also handling it.
 ---@params count? integer
 ---@return boolean|string|nil
 function inventory.dropUp(count)
-    return inventory.drop_function(count, turtle.dropUp)
+    return inventory.drop_function(turtle.dropUp, count)
 end
 
 ---Equivalent to turtle.dropDown(count), but also handling it.
 ---@params count? integer
 ---@return boolean|string|nil
 function inventory.dropDown(count)
-    return inventory.drop_function(count, turtle.dropDown)
+    return inventory.drop_function(turtle.dropDown, count)
 end
 
 
@@ -277,7 +277,7 @@ end
 ---@return boolean
 ---@return string?
 function inventory.dig(toolSide)
-    return inventory.drop_function(toolSide, turtle.dig)
+    return inventory.drop_function(turtle.dig, toolSide)
 end
 
 ---Equivalent to turtle.dropUp(count), but also handling it.
@@ -285,7 +285,7 @@ end
 ---@return boolean
 ---@return string?
 function inventory.digUp(toolSide)
-    return inventory.drop_function(toolSide, turtle.digUp)
+    return inventory.drop_function(turtle.digUp, toolSide)
 end
 
 ---Equivalent to turtle.dropDown(count), but also handling it.
@@ -293,7 +293,7 @@ end
 ---@return boolean
 ---@return string?
 function inventory.digDown(toolSide)
-    return inventory.drop_function(toolSide, turtle.digDown)
+    return inventory.drop_function(turtle.digDown, toolSide)
 end
 
 
