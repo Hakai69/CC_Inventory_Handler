@@ -1,6 +1,6 @@
 --- Inventory Handler module
 
-local prefix = ... and (...):match('(.-)[^%.]+$') or 'inventory_handler'
+local prefix = ... and (...):match('(.-)[^%.]+$') or 'CC_Inventory_Handler'
 local function import (modname)
     return require(prefix .. modname)
 end
