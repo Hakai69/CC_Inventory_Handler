@@ -312,3 +312,5 @@ function inventory.check_for_all(item_name)
     end
     return locations
 end
+
+return inventory
