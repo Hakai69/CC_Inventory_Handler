@@ -220,7 +220,7 @@ end
 ---@return string? reason
 function inventory.quality_vacate(slot)
     local i = 1
-    while i < inventory.num_slots and not (inventory.slots[i] and item_handler.is_better_than(inventory.slots[slot], inventory.slots[i])) do
+    while i < inventory.num_slots and not (inventory.slots[i] and item_handler.is_better_than(inventory.slots[slot].name, inventory.slots[i].name)) do
         i = i + 1
     end
 
