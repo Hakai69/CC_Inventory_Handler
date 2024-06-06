@@ -228,7 +228,7 @@ function inventory.quality_vacate(slot)
         return false, 'No material with lesser quality inside the inventory'
     end
 
-    inventory.vacate(i)
+    inventory.vacate_slot(i)
     local original_slot = inventory.selected_slot
     inventory.select(slot)
     local bool, str = inventory.transferTo(i)
@@ -344,8 +344,8 @@ function inventory.init()
     for i=1, inventory.num_slots - 1 do
         inventory.register_slot(i)
     end
-    inventory.select(16)
-    inventory.drop()
+    turtle.select(16)
+    turtle.drop()
     inventory.select(1)
 end
 inventory.init()
