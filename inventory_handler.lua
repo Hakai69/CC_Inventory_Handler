@@ -123,13 +123,13 @@ function inventory.transferTo(slot, quantity)
         local target_max_count = inventory.slots[slot].max_count
         local target_count = inventory.slots[slot].count
 
-        inventory.add_to_slot(inventory.selected_slot, - quantity or target_count - target_max_count)
+        inventory.add_to_slot(inventory.selected_slot, - (quantity or target_max_count - target_count))
         inventory.add_to_slot(slot, origin_count)
 
     else --If the slot is empty just transfer everything
         local instance = inventory.slots[inventory.selected_slot]
         inventory.insert_new_item(slot, {name = instance.name, count = quantity or instance.count, max_count = instance.max_count})
-        inventory.add_to_slot(inventory.selected_slot, - quantity or - instance.count)
+        inventory.add_to_slot(inventory.selected_slot, - (quantity or instance.count))
     end
 
     return bool, str
@@ -217,14 +217,23 @@ end
 ---Vacates another item of lesser quality to fit the main item
 ---@param slot integer Slot where the main item is
 ---@return boolean success
+---@return string? reason
 function inventory.quality_vacate(slot)
-    for i=1, inventory.num_slots do
-        if inventory.slots[i] and item_handler.is_better_than(inventory.slots[slot].name, inventory.slots[i].name) then
-            inventory.vacate_slot(i)
-            return inventory.transferTo(i)
-        end
+    local i = 1
+    while i < inventory.num_slots and not (inventory.slots[i] and item_handler.is_better_than(inventory.slots[slot], inventory.slots[i])) do
+        i = i + 1
     end
-    return false
+
+    if i >= 16 then
+        return false, 'No material with lesser quality inside the inventory'
+    end
+
+    inventory.vacate(i)
+    local original_slot = inventory.selected_slot
+    inventory.select(slot)
+    local bool, str = inventory.transferTo(i)
+    inventory.select(original_slot)
+    return bool, str
 end
 
 ---Empties a slot by storing it in it's inventory or dropping a lesser quality material
