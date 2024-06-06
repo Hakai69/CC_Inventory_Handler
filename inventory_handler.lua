@@ -176,7 +176,7 @@ end
 ---@return integer | false
 function inventory.find_empty_slot()
     local slot = 1
-    while inventory.slot[slot] and slot < inventory.num_slots do
+    while inventory.slots[slot] and slot < inventory.num_slots do
         slot = slot + 1
     end
     return slot < 16 and slot or false -- Slot 16 not included for managing items
@@ -200,10 +200,9 @@ function inventory.fill_vacant_slots(vacated_slot)
     while remaining_items > 0 and vacating_slot do
         if vacating_slot ~= vacated_slot then
             inventory.transferTo(vacating_slot)
-
             remaining_items = remaining_items - vacating_instance.max_count + vacating_instance.count
-            vacating_slot, vacating_instance = next(inventory.lookup[vacated_item_name], vacating_slot)
         end
+        vacating_slot, vacating_instance = next(inventory.lookup[vacated_item_name], vacating_slot)
     end
 
     inventory.select(original_slot)
@@ -325,8 +324,12 @@ end
 
 
 ---Initialize inventory with all the information
-for i=1, inventory.num_slots do
-    inventory.register_slot(i)
+function inventory.init()
+    for i=1, inventory.num_slots do
+        inventory.register_slot(i)
+    end
+    inventory.select(1)
 end
+inventory.init()
 
 return inventory
