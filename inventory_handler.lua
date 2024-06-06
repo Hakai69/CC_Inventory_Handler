@@ -123,7 +123,7 @@ function inventory.transferTo(slot, quantity)
         local target_max_count = inventory.slots[slot].max_count
         local target_count = inventory.slots[slot].count
 
-        inventory.add_to_slot(inventory.selected_slot, - (quantity or target_max_count - target_count))
+        inventory.add_to_slot(inventory.selected_slot, - (quantity or (target_max_count - target_count)))
         inventory.add_to_slot(slot, origin_count)
 
     else --If the slot is empty just transfer everything
