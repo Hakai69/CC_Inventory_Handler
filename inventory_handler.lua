@@ -46,6 +46,9 @@ end
 function inventory.register_slot(slot)
     local item_data = turtle.getItemDetail(slot)
     if not item_data then
+        if inventory.slots[slot] then
+            inventory.set_slot_to(slot, 0)
+        end
         return
     end
     local space = turtle.getItemSpace(slot)
@@ -106,25 +109,27 @@ end
 
 ---Equivalent to turtle.transferTo(slot), but also handling it.
 ---@param slot integer
+---@param quantity? integer
 ---@return boolean success The success of the operation
 ---@return string? reason The reason why it wasn't successful
-function inventory.transferTo(slot)
-    local bool, str = turtle.transferTo(slot)
+function inventory.transferTo(slot, quantity)
+    local bool, str = turtle.transferTo(slot, quantity)
     if not bool then
         return bool, str
     end
 
     if inventory.slots[slot] then --If there are items already, determine how many transferred
-        local origin_count = inventory.slots[inventory.selected_slot].count
+        local origin_count = quantity or inventory.slots[inventory.selected_slot].count
         local target_max_count = inventory.slots[slot].max_count
         local target_count = inventory.slots[slot].count
 
-        inventory.add_to_slot(inventory.selected_slot, target_count - target_max_count)
+        inventory.add_to_slot(inventory.selected_slot, - quantity or target_count - target_max_count)
         inventory.add_to_slot(slot, origin_count)
 
     else --If the slot is empty just transfer everything
-        inventory.insert_new_item(slot, inventory.slots[inventory.selected_slot])
-        inventory.set_slot_to(inventory.selected_slot, 0)
+        local instance = inventory.slots[inventory.selected_slot]
+        inventory.insert_new_item(slot, {name = instance.name, count = quantity or instance.count, max_count = instance.max_count})
+        inventory.add_to_slot(inventory.selected_slot, - quantity or - instance.count)
     end
 
     return bool, str
@@ -214,7 +219,7 @@ end
 ---@return boolean success
 function inventory.quality_vacate(slot)
     for i=1, inventory.num_slots do
-        if inventory.slots[i] and item_handler.is_better_than(inventory.slots[slot], inventory.slots[i]) then
+        if inventory.slots[i] and item_handler.is_better_than(inventory.slots[slot].name, inventory.slots[i].name) then
             inventory.vacate_slot(i)
             return inventory.transferTo(i)
         end
@@ -325,9 +330,13 @@ end
 
 ---Initialize inventory with all the information
 function inventory.init()
-    for i=1, inventory.num_slots do
+    inventory.slots = {}
+    inventory.lookup = {}
+    for i=1, inventory.num_slots - 1 do
         inventory.register_slot(i)
     end
+    inventory.select(16)
+    inventory.drop()
     inventory.select(1)
 end
 inventory.init()
