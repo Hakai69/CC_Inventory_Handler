@@ -13,7 +13,7 @@ I might change this to a more advanced way of deciding the value of items, but i
 
 Turtle functions implemented:
 ```lua
-- turtle.getSelectedSlot()
+- turtle.getSelectedSlot(), turtle.select()
 - turtle.transferTo()
 - turtle.drop(), turtle.dropUp(), turtle.dropDown()
 - turtle.dig(), turtle.digUp(), turtle.digDown()
