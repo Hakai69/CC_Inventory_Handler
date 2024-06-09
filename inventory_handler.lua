@@ -294,7 +294,7 @@ function inventory.dig_function(func, toolSide)
     return bool, str
 end
 
----Equivalent to turtle.drop(count) (but also registering it)
+---Equivalent to turtle.dig(count) (but also registering it)
 ---@params toolSide? string
 ---@return boolean
 ---@return string?
@@ -302,7 +302,7 @@ function inventory.dig(toolSide)
     return inventory.dig_function(turtle.dig, toolSide)
 end
 
----Equivalent to turtle.dropUp(count) (but also registering it)
+---Equivalent to turtle.digUp(count) (but also registering it)
 ---@params toolSide? string
 ---@return boolean
 ---@return string?
@@ -310,7 +310,7 @@ function inventory.digUp(toolSide)
     return inventory.dig_function(turtle.digUp, toolSide)
 end
 
----Equivalent to turtle.dropDown(count) (but also registering it)
+---Equivalent to turtle.digDown(count) (but also registering it)
 ---@params toolSide? string
 ---@return boolean
 ---@return string?
