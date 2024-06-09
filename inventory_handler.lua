@@ -5,6 +5,7 @@ local function import (modname)
     return require(prefix .. modname)
 end
 
+---@module 'item_quality_handler'
 local item_handler = import 'item_quality_handler'
 
 local inventory = {
@@ -12,14 +13,15 @@ local inventory = {
     num_slots = 16,
     slots = {},
     lookup = {},
-	blockDictionary = {}
 }
 
----If a function is not implemented by the module, you should still be able to call it with the module
 local inventory_mt = {}
+
+---If a turtle function is not implemented by the module, you should still be able to call it with the module
 function inventory_mt:__index(k)
     return turtle[k]
 end
+
 setmetatable(inventory, inventory_mt)
 
 ---Inserts items into an inventory slot
@@ -41,7 +43,7 @@ function inventory.insert_new_item(slot, item_data)
     end
 end
 
----Register items in a slot inside the inventory handler
+---Register items inside a slot into the inventory handler
 ---@param slot integer
 function inventory.register_slot(slot)
     local item_data = turtle.getItemDetail(slot)
@@ -57,7 +59,7 @@ function inventory.register_slot(slot)
     inventory.insert_new_item(slot, item_data)
 end
 
----Gets the item's name from a certain slot.
+---Gets the item's name from a certain slot
 ---@param slot integer
 ---@return string?
 function inventory.get_item_name(slot)
@@ -65,7 +67,7 @@ function inventory.get_item_name(slot)
     return instance and instance.name or nil
 end
 
----Sets a slot to a certain amount of items.
+---Sets a slot to a certain amount of items (values under the min and over the max are admitted)
 ---@param slot integer
 ---@param amount integer
 function inventory.set_slot_to(slot, amount)
@@ -82,7 +84,7 @@ function inventory.set_slot_to(slot, amount)
     end
 end
 
----Adds a certain amount of items to a slot. Can also remove items if negative.
+---Adds a certain amount of items to a slot (can also remove items if ammount negative)
 ---@param slot integer
 ---@param amount integer
 function inventory.add_to_slot(slot, amount)
@@ -90,7 +92,7 @@ function inventory.add_to_slot(slot, amount)
     inventory.set_slot_to(slot, new_amount)
 end
 
----Equivalent to turtle.select(slot), but also handling it.
+---Equivalent to turtle.select(slot) (but also registering it)
 ---@param slot integer
 ---@return boolean | nil
 function inventory.select(slot)
@@ -107,7 +109,7 @@ function inventory.getSelectedSlot()
     return inventory.selected_slot
 end
 
----Equivalent to turtle.transferTo(slot), but also handling it.
+---Equivalent to turtle.transferTo(slot, [quantity]) (but also registering it)
 ---@param slot integer
 ---@param quantity? integer
 ---@return boolean success The success of the operation
@@ -118,7 +120,7 @@ function inventory.transferTo(slot, quantity)
         return bool, str
     end
 
-    if inventory.slots[slot] then --If there are items already, determine how many transferred
+    if inventory.slots[slot] then --If there are items already, determine how many have transferred
         local origin_count = quantity or inventory.slots[inventory.selected_slot].count
         local target_max_count = inventory.slots[slot].max_count
         local target_count = inventory.slots[slot].count
@@ -155,21 +157,21 @@ function inventory.drop_function(func, count)
     return bool, str
 end
 
----Equivalent to turtle.drop(count), but also handling it.
+---Equivalent to turtle.drop(count) (but also registering it)
 ---@params count? integer
 ---@return boolean|string|nil
 function inventory.drop(count)
     return inventory.drop_function(turtle.drop, count)
 end
 
----Equivalent to turtle.dropUp(count), but also handling it.
+---Equivalent to turtle.dropUp(count) (but also registering it)
 ---@params count? integer
 ---@return boolean|string|nil
 function inventory.dropUp(count)
     return inventory.drop_function(turtle.dropUp, count)
 end
 
----Equivalent to turtle.dropDown(count), but also handling it.
+---Equivalent to turtle.dropDown(count) (but also registering it)
 ---@params count? integer
 ---@return boolean|string|nil
 function inventory.dropDown(count)
@@ -177,7 +179,7 @@ function inventory.dropDown(count)
 end
 
 
----Finds the first free slot
+---Finds the first empty slot
 ---@return integer | false
 function inventory.find_empty_slot()
     local slot = 1
@@ -189,7 +191,7 @@ end
 
 ---Fills vacant entries of an item with the items at the selected spot
 ---@param vacated_slot integer Slot being vacated
----@return boolean
+---@return boolean success If the transfer has been complete
 function inventory.fill_vacant_slots(vacated_slot)
     if not inventory.slots[vacated_slot] then
         return true
@@ -228,7 +230,7 @@ function inventory.quality_vacate(slot)
         return false, 'No material with lesser quality inside the inventory'
     end
 
-    inventory.vacate_slot(i)
+    inventory.vacate_slot(i) -- Vacates the slot of the lesser quality material recursively
     local original_slot = inventory.selected_slot
     inventory.select(slot)
     local bool, str = inventory.transferTo(i)
@@ -236,7 +238,7 @@ function inventory.quality_vacate(slot)
     return bool, str
 end
 
----Empties a slot by storing it in it's inventory or dropping a lesser quality material
+---Empties a slot by moving it in it's inventory, vacating a lesser quality material or just dropping stuff that's in it
 ---@param slot integer
 ---@return boolean success
 ---@return string? reason
@@ -292,7 +294,7 @@ function inventory.dig_function(func, toolSide)
     return bool, str
 end
 
----Equivalent to turtle.drop(count), but also handling it.
+---Equivalent to turtle.drop(count) (but also registering it)
 ---@params toolSide? string
 ---@return boolean
 ---@return string?
@@ -300,7 +302,7 @@ function inventory.dig(toolSide)
     return inventory.dig_function(turtle.dig, toolSide)
 end
 
----Equivalent to turtle.dropUp(count), but also handling it.
+---Equivalent to turtle.dropUp(count) (but also registering it)
 ---@params toolSide? string
 ---@return boolean
 ---@return string?
@@ -308,7 +310,7 @@ function inventory.digUp(toolSide)
     return inventory.dig_function(turtle.digUp, toolSide)
 end
 
----Equivalent to turtle.dropDown(count), but also handling it.
+---Equivalent to turtle.dropDown(count) (but also registering it)
 ---@params toolSide? string
 ---@return boolean
 ---@return string?
@@ -317,7 +319,7 @@ function inventory.digDown(toolSide)
 end
 
 
----Find first occurrence of an item.
+---Find first occurrence of an item
 ---@param item_name string
 ---@return integer | nil
 function inventory.check_for(item_name)
@@ -325,7 +327,7 @@ function inventory.check_for(item_name)
     return slot
 end
 
----Find all occurrences of an item.
+---Find all occurrences of an item
 ---@param item_name string
 ---@return table
 function inventory.check_for_all(item_name)
@@ -348,6 +350,7 @@ function inventory.init()
     turtle.drop()
     inventory.select(1)
 end
+
 inventory.init()
 
 return inventory
