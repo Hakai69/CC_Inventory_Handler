@@ -1,9 +1,6 @@
 --- Inventory Handler module
 --[[
-Pending:
-    - turtle.getFuelLevel()
-    - turtle.getFuelLimit()
-    - turtle.refuel([quantity])
+
 ]]
 
 
@@ -342,6 +339,49 @@ end
 ---@return string?
 function inventory.digDown(toolSide)
     return inventory.dig_function(turtle.digDown, toolSide)
+end
+
+
+---Abstract function for sucking
+---@param sucking_function function
+---@param count? integer Number of items to suck
+---@return boolean success The success of the operation
+---@return string? reason The reason why it wasn't successful
+function inventory.suck_function(sucking_function, count)
+    inventory.select(16)
+
+    local bool, str = sucking_function(count)
+    if not bool then
+        return bool, str
+    end
+
+    inventory.register_slot(16)
+    inventory.vacate_slot(16)
+    return bool, str
+end
+
+---Equivalent to turtle.suck(count) (but also registering it)
+---@params count? integer
+---@return boolean
+---@return string?
+function inventory.suck(count)
+    return inventory.suck_function(turtle.suck, count)
+end
+
+---Equivalent to turtle.suckUp(count) (but also registering it)
+---@params count? integer
+---@return boolean
+---@return string?
+function inventory.suckUp(count)
+    return inventory.suck_function(turtle.suckUp, count)
+end
+
+---Equivalent to turtle.suckDown(count) (but also registering it)
+---@params count? integer
+---@return boolean
+---@return string?
+function inventory.suckDown(count)
+    return inventory.suck_function(turtle.suckDown, count)
 end
 
 
