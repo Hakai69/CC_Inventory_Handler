@@ -1,4 +1,11 @@
 --- Inventory Handler module
+--[[
+Pending:
+    - turtle.getFuelLevel()
+    - turtle.getFuelLimit()
+    - turtle.refuel([quantity])
+]]
+
 
 local prefix = ... and (...):match('(.-)[^%.]+$') or 'CC_Inventory_Handler'
 local function import (modname)
@@ -13,6 +20,8 @@ local inventory = {
     num_slots = 16,
     slots = {},
     lookup = {},
+    fuel_level = 0,
+    fuel_limit = 0
 }
 
 local inventory_mt = {}
@@ -23,6 +32,18 @@ function inventory_mt:__index(k)
 end
 
 setmetatable(inventory, inventory_mt)
+
+-- Only included the intended fuel types
+local fuel_dictionary = {
+    ['minecraft:coal'] = 80,
+    ['minecraft:coal_block'] = 800,
+    ['minecraft:charcoal'] = 80,
+    ['minecraft:lava_bucket'] = 1000,
+}
+
+local ordered_fuel_types = {}
+for fuel_type, _ in ipairs(fuel_dictionary) do table.insert(ordered_fuel_types, fuel_type) end
+table.sort(ordered_fuel_types, function (a, b) return fuel_dictionary[a] >= fuel_dictionary[b] end)
 
 ---Inserts items into an inventory slot
 ---@param slot integer
@@ -105,7 +126,6 @@ end
 ---Equivalent to turtle.getSelectedSlot()
 ---@return integer
 function inventory.getSelectedSlot()
-    assert(turtle.getSelectedSlot() == inventory.selected_slot, 'Selected slot does not coincide with the selected slot registered in the inventory handler. Make sure to use the commands from the inventory handler instead of turtle commands.')
     return inventory.selected_slot
 end
 
@@ -222,7 +242,13 @@ end
 ---@return string? reason
 function inventory.quality_vacate(slot)
     local i = 1
-    while i < inventory.num_slots and not (inventory.slots[i] and item_handler.is_better_than(inventory.slots[slot].name, inventory.slots[i].name)) do
+    local main_item_name = inventory.slots[slot].name
+
+    while i < inventory.num_slots and (
+        not inventory.slots[i] or --There is no item in the slot
+        item_handler.is_better_than(inventory.slots[i].name, main_item_name) or --Main item is worse than the item selected
+        fuel_dictionary[inventory.slots[i]] --The item selected is a fuel
+    ) do
         i = i + 1
     end
 
@@ -321,7 +347,7 @@ end
 
 ---Find first occurrence of an item
 ---@param item_name string
----@return integer | nil
+---@return integer?
 function inventory.check_for(item_name)
     local slot, _ = next(inventory.lookup[item_name])
     return slot
@@ -339,6 +365,72 @@ function inventory.check_for_all(item_name)
 end
 
 
+---Equivalent to turtle.getFuelLevel() using inventory module
+---@return integer
+function inventory.getFuelLevel()
+    return inventory.fuel_level
+end
+
+---Equivalent to turtle.getFuelLimit() using inventory module
+---@return integer
+function inventory.getFuelLimit()
+    return inventory.fuel_limit
+end
+
+---Equivalent to turtle.refuel() using inventory module
+---@param quantity? integer Maximum number of items to use for refueling
+---@return boolean refueled
+function inventory.refuel(quantity)
+    local instance = turtle.slots[turtle.selected_slot]
+    local fuel = instance.name
+    local count = instance.count
+
+    local refueling_quantity = math.min(count, quantity or instance.max_count)
+
+    inventory.fuel_level = inventory.fuel_level + refueling_quantity * fuel_dictionary[fuel]
+    inventory.add_to_slot(inventory.selected_slot, -refueling_quantity)
+
+    return turtle.refuel(refueling_quantity)
+end
+
+---Greedily refuels targetting an amount of fuel and overshooting
+---@param fuel_quantity integer Target amount to refuel
+---@return boolean refueled_enough
+function inventory.refuel_to(fuel_quantity)
+    for _, fuel in ipairs(ordered_fuel_types) do
+        -- Recharge just under what's wanted
+        local quantity = (fuel_quantity - inventory.fuel_level - 1) // fuel_dictionary[fuel] - 1
+        local slot = inventory.check_for(fuel)
+        while slot and quantity > 0 do
+            local count = inventory.slots[slot].count
+            local refueling_quantity = math.min(count, quantity)
+
+            inventory.select(slot)
+            inventory.refuel(refueling_quantity)
+
+            quantity = quantity - refueling_quantity
+
+            slot = inventory.check_for(fuel)
+        end
+    end
+
+    -- Overshoot by the minimum ammount
+    local index =  #ordered_fuel_types
+    local slot = nil
+    repeat
+        local fuel = ordered_fuel_types[index]
+        slot = inventory.check_for(fuel)
+        index = index - 1
+    until slot or index < 1
+
+    if slot then
+        inventory.select(slot)
+        inventory.refuel(1)
+    end
+
+    return inventory.fuel_level >= fuel_quantity
+end
+
 ---Initialize inventory with all the information
 function inventory.init()
     inventory.slots = {}
@@ -346,9 +438,10 @@ function inventory.init()
     for i=1, inventory.num_slots - 1 do
         inventory.register_slot(i)
     end
-    turtle.select(16)
-    turtle.drop()
+    inventory.vacate_slot(16)
     inventory.select(1)
+    inventory.fuel_level = turtle.getFuelLevel()
+    inventory.fuel_limit = turtle.getFuelLimit()
 end
 
 inventory.init()
