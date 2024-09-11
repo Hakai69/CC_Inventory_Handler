@@ -19,7 +19,7 @@ end
 -- For all the item list shenanigans
 local item_quality_handler = {}
 
----@enum IDs
+---@enum item_quality_handler.IDs
 item_quality_handler.IDs = {
     good = 4,
     unknown = 3,
@@ -53,11 +53,11 @@ end
 
 item_quality_handler.bad_items = {}
 local bad_items_mt = {
-	__index = function (_, k) -- Bad item if it's from minecraft and it isn't considered as good
-		return (string.sub(k,1, string.len("minecraft:")) == "minecraft:"
-				and not item_quality_handler.good_items[k]
-				and not item_quality_handler.average_items[k])
-	end
+    __index = function (_, k) -- Bad item if it's from minecraft and it isn't considered as good
+        return (string.sub(k,1, string.len("minecraft:")) == "minecraft:"
+                and not item_quality_handler.good_items[k]
+                and not item_quality_handler.average_items[k])
+    end
 }
 
 setmetatable(item_quality_handler.bad_items, bad_items_mt)

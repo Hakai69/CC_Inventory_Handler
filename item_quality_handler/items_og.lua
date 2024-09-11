@@ -52,5 +52,5 @@ Average_items_base{
 }
 
 Bad_items_base{
-	"minecraft:stone"
+    "minecraft:stone"
 }
